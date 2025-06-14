@@ -498,7 +498,8 @@
                 const prompt = `Generate a commercial feasibility study summary for ${locationName} for the last 5 years. Use the following format exactly:\n\n**Major Development Projects:**\n- [Point 1]\n- [Point 2]\n\n**Economic & Population Trends:**\n- [Point 1]\n- [Point 2]\n\n**Infrastructure Improvements:**\n- [Point 1]\n- [Point 2]\n\n**Market Sentiment & Future Outlook:**\n- [Point 1]\n- [Point 2]`;
                 let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = { contents: chatHistory };
-                const geminiApiKey = ""; // This should be an empty string, canvas will handle it
+                // *** FIX: Use the main API_KEY for the Gemini call as well ***
+                const geminiApiKey = API_KEY; 
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
 
                 const apiResponse = await fetch(apiUrl, {
