@@ -77,12 +77,12 @@
             </svg>
         </div>
         
-        <!-- Instructions -->
-        <div id="instructions" class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6">
-            <h3 class="font-bold text-blue-800">How to use:</h3>
-            <ol id="instructions-list" class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
+        <!-- Instructions / Notification Panel -->
+        <div id="instructions" class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6 transition-all duration-300">
+            <h3 id="instructions-header" class="font-bold text-blue-800">How to use:</h3>
+            <div id="instructions-body">
                  <!-- Instructions will be dynamically set by JS -->
-            </ol>
+            </div>
         </div>
         
         <!-- Property Valuation Panel -->
@@ -310,7 +310,7 @@
             
             const propButton = document.getElementById('mode-property');
             const landButton = document.getElementById('mode-land');
-            const instructionsList = document.getElementById('instructions-list');
+            const instructionsBody = document.getElementById('instructions-body');
 
             if (mode === 'property') {
                 propButton.classList.add('bg-white', 'text-blue-700', 'shadow');
@@ -320,10 +320,12 @@
                 if (mapClickListener) mapClickListener.remove();
                 mapClickListener = map.addListener('click', handleMapClickForProperty);
                 
-                instructionsList.innerHTML = `
-                    <li>Search for a specific property address.</li>
-                    <li>Or, click directly on a property on the map.</li>
-                    <li>The valuation panel will appear automatically.</li>
+                instructionsBody.innerHTML = `
+                    <ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
+                        <li>Search for a specific property address.</li>
+                        <li>Or, click directly on a property on the map.</li>
+                        <li>The valuation panel will appear automatically.</li>
+                    </ol>
                 `;
             } else { // mode === 'land'
                 landButton.classList.add('bg-white', 'text-blue-700', 'shadow');
@@ -332,9 +334,11 @@
                 
                 if (mapClickListener) mapClickListener.remove();
                 
-                instructionsList.innerHTML = `
-                    <li>Use the polygon tool in the top-center of the map to draw a shape.</li>
-                    <li>The land analysis report will appear automatically.</li>
+                instructionsBody.innerHTML = `
+                    <ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
+                       <li>Use the polygon tool in the top-center of the map to draw a shape.</li>
+                       <li>The land analysis report will appear automatically.</li>
+                    </ol>
                 `;
             }
         }
@@ -346,10 +350,24 @@
             }
             geocoder.geocode({ location: e.latLng }, (results, status) => {
                 if (status === 'OK' && results[0]) {
+                    const place = results[0];
+                    // --- Check if the clicked location is a valid property type ---
+                    const invalidTypes = ['natural_feature', 'park', 'airport', 'route'];
+                    const isInvalid = place.types.some(type => invalidTypes.includes(type));
+                    
+                    if (isInvalid) {
+                        showNotification('Invalid selection. Please click on a building or property, not a natural feature.', 'error');
+                        return;
+                    }
+
                     clearSelection(true);
-                    lastSearchedPlace = results[0];
-                    analyzeAddress(results[0]);
+                    lastSearchedPlace = place;
+                    analyzeAddress(place);
+                    
                     map.panTo(e.latLng);
+                    if (window.innerWidth >= 768) { 
+                        map.panBy(-200, 0); 
+                    }
                 } else {
                     console.error('Geocode was not successful: ' + status);
                 }
@@ -576,6 +594,38 @@
         }
 
         // --- ERROR HANDLING & UTILITIES ---
+        function showNotification(message, type = 'info') {
+            const instructionsPanel = document.getElementById('instructions');
+            const header = document.getElementById('instructions-header');
+            const body = document.getElementById('instructions-body');
+            
+            // Save original content
+            const originalHeader = header.innerHTML;
+            const originalBody = body.innerHTML;
+            
+            // Set error/info message
+            header.textContent = type === 'error' ? 'Invalid Selection' : 'Info';
+            body.innerHTML = `<p class="text-sm mt-2">${message}</p>`;
+
+            // Change colors
+            instructionsPanel.classList.remove('bg-blue-50', 'border-blue-400');
+            header.classList.remove('text-blue-800');
+            if (type === 'error') {
+                instructionsPanel.classList.add('bg-red-100', 'border-red-500');
+                header.classList.add('text-red-800');
+            }
+
+            // Revert after a delay
+            setTimeout(() => {
+                header.innerHTML = originalHeader;
+                body.innerHTML = originalBody;
+                instructionsPanel.classList.add('bg-blue-50', 'border-blue-400');
+                instructionsPanel.classList.remove('bg-red-100', 'border-red-500');
+                header.classList.add('text-blue-800');
+                header.classList.remove('text-red-800');
+            }, 4000);
+        }
+
         function handleAiError(error, container, button){
              console.error("AI Error:", error);
             let userErrorMessage = `<p class="text-red-500">Could not generate the analysis. Error: ${error.message}</p>`;
