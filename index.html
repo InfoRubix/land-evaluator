@@ -145,7 +145,7 @@
     <script>
         // --- GOOGLE MAPS API SCRIPT ---
         // IMPORTANT: Replace "YOUR_API_KEY" with your actual Google Maps API key.
-        const API_KEY = "AIzaSyAWBj5Dd0YiYCD0bsaZ8RJSjWrvLpW__NQ"; 
+        const API_KEY = "AIzaSyAuya9u6xPQlg7-5r60mivksXgemihnT4U"; 
         
         // --- GLOBAL VARIABLES ---
         let map;
@@ -495,7 +495,7 @@
                 const locationName = locality ? locality.long_name : geoResponse.results[0].formatted_address;
 
                 // --- Call Gemini API ---
-                const prompt = `Provide a commercial feasibility study summary for the area of ${locationName}. Focus on the last 5 years. Include sections on: 1. Major commercial and residential development projects (completed or ongoing). 2. Economic trends and population growth. 3. Infrastructure improvements (e.g., new highways, transit lines). 4. Overall market sentiment and future commercial outlook. Present the summary in clear, well-structured paragraphs.`;
+                const prompt = `Generate a commercial feasibility study summary for ${locationName} for the last 5 years. Use the following format exactly:\n\n**Major Development Projects:**\n- [Point 1]\n- [Point 2]\n\n**Economic & Population Trends:**\n- [Point 1]\n- [Point 2]\n\n**Infrastructure Improvements:**\n- [Point 1]\n- [Point 2]\n\n**Market Sentiment & Future Outlook:**\n- [Point 1]\n- [Point 2]`;
                 let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = { contents: chatHistory };
                 const geminiApiKey = ""; // This should be an empty string, canvas will handle it
@@ -517,8 +517,18 @@
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
                     const text = result.candidates[0].content.parts[0].text;
-                    // Format the text with paragraphs
-                    summaryContent.innerHTML = text.split('\n').map(p => `<p class="mb-2">${p}</p>`).join('');
+                    // Convert markdown-like response to HTML list
+                    const html = text
+                        .replace(/\*\*(.*?)\*\*/g, '<h5 class="font-semibold text-gray-800 mt-4 mb-2">$1</h5>') // Headings
+                        .replace(/(\n|^)[\*|-]\s/g, '<li>') // List items
+                        .split('<li>')
+                        .map((item, index) => index === 0 ? item : `<li class="ml-4 list-disc">${item.trim()}</li>`)
+                        .join('')
+                        .replace(/<\/li>(\s*<h5)/g, '</li></ul>$1') // Close UL before next heading
+                        .replace(/(<h5>.*?<\/h5>)/g, '$1<ul>') + '</ul>'; // Start UL after heading
+                    
+                    summaryContent.innerHTML = html.replace(/<ul><\/ul>/g, ''); // Clean up empty lists
+
                 } else {
                     throw new Error("The AI model returned no content.");
                 }
@@ -559,10 +569,25 @@
 
             let errorMessage = '';
 
-            if (status === 'TIMEOUT') {
+            if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
+                 errorMessage = `
+                    <div id="${errorId}" class="api-error bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg my-2" role="alert">
+                        <p class="font-bold">API Key Error: Website Not Authorized</p>
+                        <p class="mt-2">Your API key's security settings are preventing this website from using Google Maps services.</p>
+                        <p class="mt-2 text-sm"><strong>How to fix:</strong></p>
+                        <ol class="list-decimal list-inside mt-1 space-y-1 text-sm">
+                            <li>Go to your <a href="https://console.cloud.google.com/" target="_blank" class="underline font-semibold">Google Cloud Console</a>.</li>
+                            <li>Navigate to "APIs & Services" > "Credentials".</li>
+                            <li>Find your API key and click the edit icon (pencil).</li>
+                            <li>Under "Application restrictions", find the "HTTP referrers (web sites)" list.</li>
+                            <li>Click "ADD AN ITEM" and enter the URL of the website where you are using this app.</li>
+                            <li class="mt-1">Your site's URL to add is: <br><strong class="break-all">${window.location.origin}</strong></li>
+                            <li class="mt-1">For a wildcard, add: <br><strong class="break-all">${window.location.origin}/*</strong></li>
+                        </ol>
+                    </div>
+                `;
+            } else if (status === 'TIMEOUT') {
                 errorMessage = `<div id="${errorId}" class="api-error bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">Analysis Timed Out</p><p>The search for '${category}' took too long. The analysis will continue but may be incomplete.</p></div>`;
-            } else if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
-                errorMessage = `<div id="${errorId}" class="api-error bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">API Configuration Error</p><p class="mt-1">Your API key is not authorized for the <strong>Places API</strong>. Please check your Google Cloud Console.</p></div>`;
             } else if (status === google.maps.places.PlacesServiceStatus.OVER_QUERY_LIMIT) {
                 errorMessage = `<div id="${errorId}" class="api-error bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">Usage Limit Reached</p><p>You have exceeded the free usage quota. Analysis is incomplete.</p></div>`;
             } else {
