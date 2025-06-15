@@ -32,35 +32,41 @@
             border-radius: 8px !important;
         }
         /* Styling for the AI summary placeholder */
-        #ai-summary-content p:empty:before, #property-valuation-content p:empty:before {
+        #ai-summary-content p:empty:before, 
+        #property-valuation-content p:empty:before,
+        #seller-pitch-content p:empty:before {
             content: "Click the generate button to get an AI-powered analysis.";
             color: #9ca3af;
             font-style: italic;
+        }
+        .rotate-180 {
+            transform: rotate(180deg);
         }
     </style>
 </head>
 <body class="h-screen w-screen flex flex-col md:flex-row antialiased overflow-hidden">
 
     <!-- Sidebar for controls and results -->
-    <div id="sidebar" class="w-full md:w-[400px] md:flex-shrink-0 h-1/2 md:h-full overflow-y-auto bg-white shadow-lg p-6 z-10">
-        <div class="flex items-center justify-between mb-6">
-            <!-- Updated Heading -->
-            <h1 class="text-2xl font-bold text-gray-800">AI Property Analyzer</h1>
-             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.05 3.05a7 7 0 000 9.9l4.95-4.95a7 7 0 00-9.9 0zM10 18a8 8 0 100-16 8 8 0 000 16zm-4.95-2.05a7 7 0 009.9 0L10 10.05l-4.95 5.9z" clip-rule="evenodd" />
+    <div id="sidebar" class="w-full md:w-[450px] md:flex-shrink-0 h-1/2 md:h-full overflow-y-auto bg-white shadow-lg p-6 z-10">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">AI Property Analyzer</h1>
+                <p class="text-xs text-gray-500">Powered by RBX</p>
+            </div>
+             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                 <path fill-rule="evenodd" d="M5.05 3.05a7 7 0 000 9.9l4.95-4.95a7 7 0 00-9.9 0zM10 18a8 8 0 100-16 8 8 0 000 16zm-4.95-2.05a7 7 0 009.9 0L10 10.05l-4.95 5.9z" clip-rule="evenodd" />
             </svg>
         </div>
-
-        <!-- Mode Switcher -->
+        
         <div class="mb-4">
              <label class="text-sm font-medium text-gray-700">Analysis Mode</label>
-            <div class="mt-2 grid grid-cols-2 gap-2 rounded-lg bg-gray-200 p-1">
-                <button id="mode-property" class="px-3 py-2 text-sm font-semibold rounded-md transition-colors">Property Valuation</button>
-                <button id="mode-land" class="px-3 py-2 text-sm font-semibold rounded-md transition-colors">Land Analysis</button>
+            <div class="mt-2 grid grid-cols-3 gap-1 rounded-lg bg-gray-200 p-1">
+                <button id="mode-property" class="px-3 py-2 text-sm font-semibold rounded-md transition-colors">Valuation</button>
+                <button id="mode-land" class="px-3 py-2 text-sm font-semibold rounded-md transition-colors">Land</button>
+                <button id="mode-seller" class="px-3 py-2 text-sm font-semibold rounded-md transition-colors">Seller Pitch</button>
             </div>
         </div>
 
-        <!-- Map View Switcher -->
         <div class="mb-4">
              <label class="text-sm font-medium text-gray-700">Map View</label>
             <div class="mt-2 grid grid-cols-2 gap-2 rounded-lg bg-gray-200 p-1">
@@ -69,613 +75,689 @@
             </div>
         </div>
 
-        <!-- Search Input -->
         <div class="mb-4 relative">
             <input id="pac-input" type="text" placeholder="Search for a location or address" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute right-3 top-3.5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
             </svg>
         </div>
         
-        <!-- Instructions / Notification Panel -->
         <div id="instructions" class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg mb-6 transition-all duration-300">
             <h3 id="instructions-header" class="font-bold text-blue-800">How to use:</h3>
-            <div id="instructions-body">
-                 <!-- Instructions will be dynamically set by JS -->
-            </div>
+            <div id="instructions-body"></div>
         </div>
-        
-        <!-- Property Valuation Panel -->
-        <div id="property-valuation-panel" class="hidden border rounded-lg">
-            <div class="flex justify-between items-center p-3 bg-green-50 rounded-t-lg">
-                <h2 class="text-xl font-bold text-gray-800">Property Valuation</h2>
-            </div>
-            <div class="p-4 space-y-4">
-                <p id="property-address" class="font-semibold text-gray-700 bg-gray-100 p-2 rounded-md"></p>
-                <div id="property-valuation-content" class="text-sm text-gray-800 leading-relaxed border-t pt-4"><p></p></div>
-                <div id="property-loading" class="hidden items-center justify-center py-4">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                    <p class="ml-3 text-gray-600">Estimating market value...</p>
+
+        <div id="panels-container">
+            <!-- Property Valuation Panel -->
+            <div id="property-valuation-panel" class="hidden analysis-panel border rounded-lg" data-mode="property">
+                <div class="flex justify-between items-center p-3 bg-green-50 rounded-t-lg">
+                    <h2 class="text-xl font-bold text-gray-800">Property Valuation</h2>
                 </div>
-                <button id="generate-valuation-button" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.158-.103.346-.195.574-.277a6.991 6.991 0 015.988 0c.228.082.416.174.574.277a1 1 0 01.582.946l.553 4.148a1 1 0 01-.29 1.003l-2.433 2.14a1 1 0 01-1.282-.14l-1.38-1.724a1 1 0 00-1.282 0l-1.38 1.724a1 1 0 01-1.282.14l-2.433-2.14a1 1 0 01-.29-1.003l.553-4.148a1 1 0 01.582-.946z" /><path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1.333a4.002 4.002 0 013.307 2.334a1 1 0 01-.453 1.333l-4.251 2.834a1 1 0 01-1.21 0L6.406 8.001a1 1 0 01-.453-1.333A4.002 4.002 0 019 4.333V3a1 1 0 011-1h2z" clip-rule="evenodd" /></svg>
-                    Estimate Market Value
-                </button>
+                <div class="p-4 space-y-4">
+                    <p id="property-address" class="font-semibold text-gray-700 bg-gray-100 p-2 rounded-md"></p>
+                    <div id="property-valuation-content" class="text-sm text-gray-800 leading-relaxed border-t pt-4"><p></p></div>
+                    <div id="property-loading" class="hidden items-center justify-center py-4">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                        <p class="ml-3 text-gray-600">Estimating market value...</p>
+                    </div>
+                    <button id="generate-valuation-button" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center justify-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.158-.103.346-.195.574-.277a6.991 6.991 0 015.988 0c.228.082.416.174.574.277a1 1 0 01.582.946l.553 4.148a1 1 0 01-.29 1.003l-2.433 2.14a1 1 0 01-1.282-.14l-1.38-1.724a1 1 0 00-1.282 0l-1.38 1.724a1 1 0 01-1.282.14l-2.433-2.14a1 1 0 01-.29-1.003l.553-4.148a1 1 0 01.582-.946z" /><path fill-rule="evenodd" d="M12 2a1 1 0 011 1v1.333a4.002 4.002 0 013.307 2.334a1 1 0 01-.453 1.333l-4.251 2.834a1 1 0 01-1.21 0L6.406 8.001a1 1 0 01-.453-1.333A4.002 4.002 0 019 4.333V3a1 1 0 011-1h2z" clip-rule="evenodd" /></svg>
+                        Estimate Market Value
+                    </button>
+                </div>
+            </div>
+
+             <!-- Seller Pitch Panel -->
+            <div id="seller-pitch-panel" class="hidden analysis-panel border rounded-lg" data-mode="seller">
+                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-t-lg">
+                    <h2 class="text-xl font-bold text-gray-800">Seller Pitch Report</h2>
+                </div>
+                <div class="p-4 space-y-4">
+                    <p id="seller-address" class="font-semibold text-gray-700 bg-gray-100 p-2 rounded-md"></p>
+                    <div id="seller-pitch-content" class="text-sm text-gray-800 leading-relaxed border-t pt-4"><p></p></div>
+                    <div id="seller-loading" class="hidden items-center justify-center py-4">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                        <p class="ml-3 text-gray-600">Generating seller pitch...</p>
+                    </div>
+                    <button id="generate-pitch-button" class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition duration-200 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326a.78.78 0 01-.358-.442 3 3 0 014.308-3.516 6.484 6.484 0 00-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 01-2.07-.655zM16.44 15.98a4.97 4.97 0 002.07-.654.78.78 0 00.358-.442 3 3 0 00-4.308-3.517 6.484 6.484 0 011.905 3.96 2.074 2.074 0 01-.025.654zM12 10a4 4 0 110-8 4 4 0 010 8zm0 2a2 2 0 100 4 2 2 0 000-4z" /></svg>
+                        Generate Pitch
+                    </button>
+                </div>
+            </div>
+
+            <!-- Land Analysis Panel -->
+            <div id="results-panel" class="hidden analysis-panel border rounded-lg" data-mode="land">
+                 <div id="analysis-header" class="flex justify-between items-center cursor-pointer p-3 bg-gray-50 rounded-t-lg">
+                    <h2 class="text-xl font-bold text-gray-800">Land Analysis Report</h2>
+                    <svg id="analysis-chevron" class="h-6 w-6 text-gray-600 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+                <div id="analysis-body" class="p-4 space-y-4">
+                    <p class="text-sm text-gray-500">Based on the selected area.</p>
+                    <div id="loading" class="hidden items-center justify-center py-8">
+                         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                         <p class="ml-4 text-gray-600">Analyzing...</p>
+                    </div>
+                    <div id="analysis-content">
+                        <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg text-center">
+                            <h3 class="text-lg font-medium opacity-80">Commercial Potential Score</h3>
+                            <p id="score" class="text-5xl font-bold my-2">0</p>
+                            <p id="score-description" class="text-sm opacity-90"></p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md mt-4 border">
+                            <h4 class="font-semibold text-gray-700">Land Area</h4>
+                            <p id="area" class="text-2xl font-bold text-gray-900">0 m²</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-md mt-4 border">
+                            <h4 class="font-semibold text-gray-700 mb-3">Nearby Amenities (5km radius)</h4>
+                            <div id="poi-list" class="space-y-2 text-sm"></div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-md mt-4 border">
+                            <div id="ai-summary-header" class="flex justify-between items-center cursor-pointer p-3 bg-gray-50 rounded-t-lg">
+                               <h4 class="font-semibold text-gray-700">AI Feasibility Summary</h4>
+                               <svg class="h-5 w-5 text-gray-500 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                            <div id="ai-summary-body" class="p-4 hidden">
+                                 <div id="ai-summary-content" class="text-sm text-gray-800 leading-relaxed"><p></p></div>
+                                  <div id="ai-loading" class="hidden items-center justify-center py-4">
+                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                                     <p class="ml-3 text-gray-600">Generating summary...</p>
+                                 </div>
+                                 <button id="generate-summary-button" class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
+                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                                     Generate Summary
+                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Land Analysis Panel -->
-        <div id="results-panel" class="hidden border rounded-lg">
-             <div id="analysis-header" class="flex justify-between items-center cursor-pointer p-3 bg-gray-50 rounded-t-lg">
-                <h2 class="text-xl font-bold text-gray-800">Land Analysis Report</h2>
-                <svg id="analysis-chevron" class="h-6 w-6 text-gray-600 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
-           
-            <div id="analysis-body" class="p-4 space-y-4">
-                <p class="text-sm text-gray-500">Based on the selected area.</p>
-                <div id="loading" class="hidden items-center justify-center py-8">
-                     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-                     <p class="ml-4 text-gray-600">Analyzing...</p>
-                </div>
-               
-                <div id="analysis-content">
-                    <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg text-center">
-                        <h3 class="text-lg font-medium opacity-80">Commercial Potential Score</h3>
-                        <p id="score" class="text-5xl font-bold my-2">0</p>
-                        <p id="score-description" class="text-sm opacity-90"></p>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-md mt-4 border">
-                        <h4 class="font-semibold text-gray-700">Land Area</h4>
-                        <p id="area" class="text-2xl font-bold text-gray-900">0 m²</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-md mt-4 border">
-                        <h4 class="font-semibold text-gray-700 mb-3">Nearby Amenities (5km radius)</h4>
-                        <div id="poi-list" class="space-y-2 text-sm"></div>
-                    </div>
-                    <div class="bg-white rounded-lg shadow-md mt-4 border">
-                        <div id="ai-summary-header" class="flex justify-between items-center cursor-pointer p-3 bg-gray-50 rounded-t-lg">
-                           <h4 class="font-semibold text-gray-700">AI Feasibility Summary</h4>
-                           <svg class="h-5 w-5 text-gray-500 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                        </div>
-                        <div id="ai-summary-body" class="p-4 hidden">
-                            <div id="ai-summary-content" class="text-sm text-gray-800 leading-relaxed"><p></p></div>
-                             <div id="ai-loading" class="hidden items-center justify-center py-4">
-                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                                <p class="ml-3 text-gray-600">Generating summary...</p>
-                            </div>
-                            <button id="generate-summary-button" class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-200 flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                                Generate Summary
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="action-buttons" class="hidden mt-4 space-y-2">
+            <button id="clear-button" class="w-full bg-red-500 text-white py-2.5 px-4 rounded-lg hover:bg-red-600 transition duration-200 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                Start New Analysis
+            </button>
         </div>
-        <button id="clear-button" class="hidden mt-6 w-full bg-red-500 text-white py-2.5 px-4 rounded-lg hover:bg-red-600 transition duration-200 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-            Start New Analysis
-        </button>
     </div>
 
-    <!-- Map Container -->
     <div id="map-container" class="w-full h-full relative">
         <div id="map"></div>
     </div>
     
     <script>
-        // --- GOOGLE MAPS API SCRIPT ---
-        // IMPORTANT: Replace "YOUR_API_KEY" with your actual Google Maps API key.
-        const API_KEY = "AIzaSyAuya9u6xPQlg7-5r60mivksXgemihnT4U"; 
-        
-        // --- GLOBAL VARIABLES ---
-        let map;
-        let drawingManager;
-        let selectedShape;
-        let addressMarker;
-        let lastSearchedPlace = null;
-        let placesService;
-        let geocoder;
-        let currentMode = 'property'; // 'property' or 'land'
-        let mapClickListener;
+        const App = {
+            API_KEY: "AIzaSyAuya9u6xPQlg7-5r60mivksXgemihnT4U", // IMPORTANT: Replace with your actual Google Maps API Key
+            map: null, drawingManager: null, selectedShape: null, addressMarker: null, lastSearchedPlace: null,
+            placesService: null, geocoder: null, currentMode: 'property', mapClickListener: null,
+            poiMarker: null, poiLine: null, poiInfoWindow: null,
 
-        // --- MAP INITIALIZATION ---
-        function initMap() {
-            const initialPos = { lat: 2.9935, lng: 101.7874 };
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: initialPos,
-                zoom: 12,
-                mapTypeId: 'roadmap',
-                mapTypeControl: false, // Turn off default control
-                streetViewControl: false,
-                fullscreenControl: false,
-                styles: [ // This style only affects the 'roadmap' type
-                    { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
-                    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
-                    { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
-                    { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
-                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
-                ]
-            });
-
-            placesService = new google.maps.places.PlacesService(map);
-            geocoder = new google.maps.Geocoder();
-
-            const input = document.getElementById("pac-input");
-            const searchBox = new google.maps.places.SearchBox(input);
-            if (!document.getElementById('sidebar').getAttribute('data-pushed')) {
-                 map.controls[google.maps.ControlPosition.TOP_LEFT].push(document.getElementById('sidebar'));
-                 document.getElementById('sidebar').setAttribute('data-pushed', 'true');
-            }
-
-            searchBox.addListener("places_changed", () => {
-                const places = searchBox.getPlaces();
-                if (places.length == 0) return;
+            init(mapInstance) {
+                this.map = mapInstance;
+                this.placesService = new google.maps.places.PlacesService(this.map);
+                this.geocoder = new google.maps.Geocoder();
+                this.poiInfoWindow = new google.maps.InfoWindow();
+                this.setupUI();
+                this.setAnalysisMode('property');
+                this.setMapView('roadmap');
+            },
+            
+            setupUI() {
+                const input = document.getElementById("pac-input");
+                const searchBox = new google.maps.places.SearchBox(input);
                 
+                // This logic is to prevent pushing the sidebar to the map controls multiple times
+                if (!document.getElementById('sidebar').getAttribute('data-pushed')) {
+                     // We move the sidebar into the map control area for better mobile layout
+                     this.map.controls[google.maps.ControlPosition.TOP_LEFT].push(document.getElementById('sidebar'));
+                     document.getElementById('sidebar').setAttribute('data-pushed', 'true');
+                }
+
+                this.drawingManager = new google.maps.drawing.DrawingManager({
+                    drawingMode: null, drawingControl: false, 
+                    drawingControlOptions: { position: google.maps.ControlPosition.TOP_CENTER, drawingModes: [google.maps.drawing.OverlayType.POLYGON] },
+                    polygonOptions: { fillColor: '#4A90E2', fillOpacity: 0.5, strokeWeight: 2, strokeColor: '#0000FF', clickable: false, editable: true, zIndex: 1 }
+                });
+                this.drawingManager.setMap(this.map);
+
+                searchBox.addListener("places_changed", () => this.handleSearch(searchBox));
+                google.maps.event.addListener(this.drawingManager, 'overlaycomplete', (event) => this.handleOverlayComplete(event));
+                
+                document.getElementById('clear-button').addEventListener('click', () => this.resetUI());
+                document.getElementById('mode-property').addEventListener('click', () => this.setAnalysisMode('property'));
+                document.getElementById('mode-land').addEventListener('click', () => this.setAnalysisMode('land'));
+                document.getElementById('mode-seller').addEventListener('click', () => this.setAnalysisMode('seller'));
+                document.getElementById('view-map').addEventListener('click', () => this.setMapView('roadmap'));
+                document.getElementById('view-satellite').addEventListener('click', () => this.setMapView('hybrid'));
+                
+                // Accordion logic for analysis panels
+                document.querySelectorAll('.analysis-panel, #ai-summary-header').forEach(element => {
+                    const header = element.id === 'ai-summary-header' ? element : element.querySelector('div:first-child');
+                    if(header) {
+                        header.addEventListener('click', () => {
+                            const body = element.id === 'ai-summary-header' ? document.getElementById('ai-summary-body') : element.querySelector('.p-4, .space-y-4');
+                            const chevron = header.querySelector('svg');
+                            if(body && chevron) {
+                                body.classList.toggle('hidden');
+                                chevron.classList.toggle('rotate-180');
+                            }
+                        });
+                    }
+                });
+
+                document.getElementById('generate-summary-button').addEventListener('click', () => this.getFeasibilitySummary());
+                document.getElementById('generate-valuation-button').addEventListener('click', () => this.getMarketValueEstimate());
+                document.getElementById('generate-pitch-button').addEventListener('click', () => this.getSellerPitch());
+            },
+
+            handleSearch(searchBox) {
+                const places = searchBox.getPlaces();
+                if (!places || places.length == 0) return;
                 const place = places[0];
                 if (!place.geometry || !place.geometry.location) return;
 
-                clearSelection(true); 
-                lastSearchedPlace = place;
-                
-                setAnalysisMode('property'); 
-                analyzeAddress(place);
+                // Automatically switch mode based on search result type
+                const isProperty = place.types.includes('street_address') || place.types.includes('premise');
+                this.setAnalysisMode(isProperty ? 'property' : this.currentMode, place);
                 
                 const bounds = new google.maps.LatLngBounds();
-                if (place.geometry.viewport) {
-                    bounds.union(place.geometry.viewport);
-                } else {
-                    bounds.extend(place.geometry.location);
-                }
-                map.fitBounds(bounds);
-                if (place.types.includes('street_address') || place.types.includes('premise')) {
-                    map.setZoom(18); 
-                }
-            });
+                if (place.geometry.viewport) bounds.union(place.geometry.viewport); else bounds.extend(place.geometry.location);
+                this.map.fitBounds(bounds);
 
-            drawingManager = new google.maps.drawing.DrawingManager({
-                drawingMode: null,
-                drawingControl: false, 
-                drawingControlOptions: { position: google.maps.ControlPosition.TOP_CENTER, drawingModes: [google.maps.drawing.OverlayType.POLYGON] },
-                polygonOptions: { fillColor: '#4A90E2', fillOpacity: 0.5, strokeWeight: 2, strokeColor: '#0000FF', clickable: false, editable: true, zIndex: 1 }
-            });
-            drawingManager.setMap(map);
+                // Zoom in closer for specific addresses
+                if (isProperty) this.map.setZoom(18); 
+            },
 
-            google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
-                clearSelection(true);
-                selectedShape = event.overlay;
-                selectedShape.type = event.type;
-                drawingManager.setDrawingMode(null);
+            handleOverlayComplete(event) {
+                if (this.selectedShape) {
+                    this.selectedShape.setMap(null);
+                }
+                this.resetUI();
+                this.selectedShape = event.overlay;
+                this.drawingManager.setDrawingMode(null);
                 
                 document.getElementById('instructions').classList.add('hidden');
                 document.getElementById('results-panel').classList.remove('hidden');
-                document.getElementById('analysis-body').classList.remove('hidden');
-                document.getElementById('analysis-chevron').classList.remove('rotate-180');
+                document.getElementById('action-buttons').classList.remove('hidden');
+                const body = document.getElementById('analysis-body');
+                if (body.classList.contains('hidden')) {
+                    body.classList.remove('hidden');
+                    document.getElementById('analysis-chevron').classList.remove('rotate-180');
+                }
+                
                 document.getElementById('analysis-content').classList.add('hidden');
                 document.getElementById('loading').classList.remove('hidden');
-                document.getElementById('clear-button').classList.remove('hidden');
-
                 document.getElementById('ai-summary-content').innerHTML = '<p></p>';
                 document.getElementById('generate-summary-button').classList.remove('hidden');
+                this.analyzeShape();
+            },
 
-                analyzeShape(selectedShape);
-            });
-
-            // --- EVENT LISTENERS ---
-            document.getElementById('clear-button').addEventListener('click', clearSelection);
-            document.getElementById('mode-property').addEventListener('click', () => setAnalysisMode('property'));
-            document.getElementById('mode-land').addEventListener('click', () => setAnalysisMode('land'));
-            document.getElementById('view-map').addEventListener('click', () => setMapView('roadmap'));
-            document.getElementById('view-satellite').addEventListener('click', () => setMapView('hybrid'));
+            setMapView(view) {
+                this.map.setMapTypeId(view);
+                document.getElementById('view-map').classList.toggle('bg-white', view === 'roadmap');
+                document.getElementById('view-map').classList.toggle('text-blue-700', view === 'roadmap');
+                document.getElementById('view-map').classList.toggle('shadow', view === 'roadmap');
+                document.getElementById('view-satellite').classList.toggle('bg-white', view === 'hybrid');
+                document.getElementById('view-satellite').classList.toggle('text-blue-700', view === 'hybrid');
+                document.getElementById('view-satellite').classList.toggle('shadow', view === 'hybrid');
+            },
             
-            document.getElementById('analysis-header').addEventListener('click', () => {
-                document.getElementById('analysis-body').classList.toggle('hidden');
-                document.getElementById('analysis-chevron').classList.toggle('rotate-180');
-            });
-            document.getElementById('ai-summary-header').addEventListener('click', () => {
-                document.getElementById('ai-summary-body').classList.toggle('hidden');
-                document.getElementById('ai-summary-header').querySelector('svg').classList.toggle('rotate-180');
-            });
-
-            document.getElementById('generate-summary-button').addEventListener('click', getFeasibilitySummary);
-            document.getElementById('generate-valuation-button').addEventListener('click', getMarketValueEstimate);
-
-            // Set initial mode
-            setAnalysisMode('property');
-            setMapView('roadmap');
-        }
-
-        // --- MODE SWITCHER & VIEW ---
-        function setMapView(view) {
-            const mapButton = document.getElementById('view-map');
-            const satelliteButton = document.getElementById('view-satellite');
-
-            if (view === 'roadmap') {
-                map.setMapTypeId('roadmap');
-                mapButton.classList.add('bg-white', 'text-blue-700', 'shadow');
-                satelliteButton.classList.remove('bg-white', 'text-blue-700', 'shadow');
-            } else {
-                map.setMapTypeId('hybrid'); // Use 'hybrid' for satellite with labels
-                satelliteButton.classList.add('bg-white', 'text-blue-700', 'shadow');
-                mapButton.classList.remove('bg-white', 'text-blue-700', 'shadow');
-            }
-        }
-        
-        function setAnalysisMode(mode) {
-            clearSelection(true); 
-            currentMode = mode;
-            
-            const propButton = document.getElementById('mode-property');
-            const landButton = document.getElementById('mode-land');
-            const instructionsBody = document.getElementById('instructions-body');
-
-            if (mode === 'property') {
-                propButton.classList.add('bg-white', 'text-blue-700', 'shadow');
-                landButton.classList.remove('bg-white', 'text-blue-700', 'shadow');
-                drawingManager.setOptions({ drawingControl: false, drawingMode: null });
+            setAnalysisMode(mode, place = null) {
+                this.resetUI();
+                this.currentMode = mode;
                 
-                if (mapClickListener) mapClickListener.remove();
-                mapClickListener = map.addListener('click', handleMapClickForProperty);
+                ['property', 'land', 'seller'].forEach(m => {
+                    const btn = document.getElementById(`mode-${m}`);
+                    btn.classList.toggle('bg-white', m === mode);
+                    btn.classList.toggle('text-blue-700', m === mode);
+                    btn.classList.toggle('shadow', m === mode);
+                });
+
+                if (this.mapClickListener) this.mapClickListener.remove();
                 
-                instructionsBody.innerHTML = `
-                    <ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
-                        <li>Search for a specific property address.</li>
-                        <li>Or, click directly on a property on the map.</li>
-                        <li>The valuation panel will appear automatically.</li>
-                    </ol>
-                `;
-            } else { // mode === 'land'
-                landButton.classList.add('bg-white', 'text-blue-700', 'shadow');
-                propButton.classList.remove('bg-white', 'text-blue-700', 'shadow');
-                drawingManager.setOptions({ drawingControl: true });
-                
-                if (mapClickListener) mapClickListener.remove();
-                
-                instructionsBody.innerHTML = `
-                    <ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1">
-                       <li>Use the polygon tool in the top-center of the map to draw a shape.</li>
-                       <li>The land analysis report will appear automatically.</li>
-                    </ol>
-                `;
-            }
-        }
-        
-        function handleMapClickForProperty(e) {
-            if (e.placeId) {
-                e.stop();
-                return; 
-            }
-            geocoder.geocode({ location: e.latLng }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    const place = results[0];
-                    // --- Check if the clicked location is a valid property type ---
-                    const invalidTypes = ['natural_feature', 'park', 'airport', 'route'];
-                    const isInvalid = place.types.some(type => invalidTypes.includes(type));
-                    
-                    if (isInvalid) {
-                        showNotification('Invalid selection. Please click on a building or property, not a natural feature.', 'error');
-                        return;
+                if (mode === 'land') {
+                    this.drawingManager.setOptions({ drawingControl: true });
+                    document.getElementById('instructions-header').textContent = 'How to use Land Analysis:';
+                    document.getElementById('instructions-body').innerHTML = `<ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1"><li>Select the polygon tool on the map.</li><li>Draw a shape around the desired land area.</li><li>The land analysis report will appear automatically.</li></ol>`;
+                } else { 
+                    this.drawingManager.setOptions({ drawingControl: false, drawingMode: null });
+                    this.mapClickListener = this.map.addListener('click', (e) => this.handleMapClickForProperty(e));
+                    const modeText = mode === 'property' ? 'Property Valuation' : 'Seller Pitch';
+                    document.getElementById('instructions-header').textContent = `How to use ${modeText}:`;
+                    document.getElementById('instructions-body').innerHTML = `<ol class="list-decimal list-inside text-sm text-blue-700 mt-2 space-y-1"><li>Search for a property address above.</li><li>Or, click directly on a property on the map.</li><li>The ${mode.toLowerCase()} panel will appear automatically.</li></ol>`;
+                    if (place) {
+                        this.lastSearchedPlace = place;
+                        this.analyzeAddress(place);
                     }
-
-                    clearSelection(true);
-                    lastSearchedPlace = place;
-                    analyzeAddress(place);
-                    
-                    map.panTo(e.latLng);
-                    if (window.innerWidth >= 768) { 
-                        map.panBy(-200, 0); 
-                    }
-                } else {
-                    console.error('Geocode was not successful: ' + status);
                 }
-            });
-        }
-
-
-        // --- ANALYSIS LOGIC ---
-        function analyzeAddress(place) {
-            document.getElementById('instructions').classList.add('hidden');
-            document.getElementById('property-valuation-panel').classList.remove('hidden');
-            document.getElementById('clear-button').classList.remove('hidden');
-            document.getElementById('property-address').textContent = place.formatted_address;
-            document.getElementById('property-valuation-content').innerHTML = '<p></p>';
+            },
             
-            document.getElementById('generate-valuation-button').classList.remove('hidden');
-            document.getElementById('property-loading').classList.add('hidden');
-            
-            if(addressMarker) addressMarker.setMap(null);
-            addressMarker = new google.maps.Marker({
-                map,
-                position: place.geometry.location,
-            });
-        }
-        
-        async function analyzeShape(shape) {
-            const path = shape.getPath();
-            const vertices = path.getArray();
-            const areaInMeters = google.maps.geometry.spherical.computeArea(path);
-            document.getElementById('area').innerText = `${areaInMeters.toFixed(2)} m²`;
-            document.getElementById('poi-list').innerHTML = '';
-            document.getElementById('score').innerText = '0';
-            document.getElementById('score-description').innerText = '';
-            
-            const bounds = new google.maps.LatLngBounds();
-            vertices.forEach(vertex => bounds.extend(vertex));
-            const center = bounds.getCenter();
-
-            const poiTypes = {
-                'Transit Station': ['transit_station'], 'Shopping': ['shopping_mall'],
-                'Food & Drink': ['restaurant'], 'Education': ['school'],
-                'Health': ['hospital'], 'Lodging': ['hotel'], 'Finance': ['bank'],
-            };
-            
-            const poiData = {};
-            let hasApiError = false;
-
-            for (const category of Object.keys(poiTypes)) {
-                const request = { location: center, radius: '5000', types: poiTypes[category] };
-                try {
-                    const results = await new Promise((resolve, reject) => {
-                        const timeoutId = setTimeout(() => reject(new Error('TIMEOUT')), 30000); 
-                        placesService.nearbySearch(request, (res, status) => {
-                            clearTimeout(timeoutId);
-                            if (status === google.maps.places.PlacesServiceStatus.OK || status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-                                resolve(res || []);
-                            } else {
-                                reject(new Error(status));
-                            }
-                        });
-                    });
-                    poiData[category] = results;
-                } catch (error) {
-                    console.error(`Failed to fetch ${category}. Status: ${error.message}`);
-                    hasApiError = true;
-                    poiData[category] = [];
-                    handleApiError(error.message, category);
-                }
-                
-                displayPoiResults(poiData, center);
-                const poiCounts = Object.keys(poiData).reduce((acc, key) => { acc[key] = poiData[key].length; return acc; }, {});
-                calculateAndDisplayScore(areaInMeters, poiCounts);
-                await new Promise(resolve => setTimeout(resolve, 250)); 
-            }
-            
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('analysis-content').classList.remove('hidden');
-
-            if (Object.values(poiData).every(list => list.length === 0) && !hasApiError) {
-                document.getElementById('poi-list').innerHTML = `<p class="text-gray-500 text-center p-4">No significant amenities found within a 5km radius.</p>`;
-            }
-        }
-        
-        // --- UI DISPLAY FUNCTIONS ---
-        function displayPoiResults(poiData, polygonCenter) {
-            const poiListContainer = document.getElementById('poi-list');
-            poiListContainer.innerHTML = ''; 
-
-            const sortedCategories = Object.keys(poiData).sort((a, b) => poiData[b].length - poiData[a].length);
-            sortedCategories.forEach(category => {
-                const places = poiData[category];
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'border-b';
-                const header = document.createElement('div');
-                header.className = 'flex justify-between items-center p-2 cursor-pointer hover:bg-gray-50 accordion-header';
-                header.innerHTML = `
-                    <span class="font-semibold text-gray-700">${category}</span>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">${places.length}</span>
-                        <svg class="h-5 w-5 text-gray-500 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </div>`;
-                const content = document.createElement('div');
-                content.className = 'hidden pl-4 pr-2 pb-2 space-y-2 accordion-content';
-                if (places.length > 0) {
-                    places.forEach(place => {
-                        const distance = google.maps.geometry.spherical.computeDistanceBetween(polygonCenter, place.geometry.location);
-                        const distanceInKm = (distance / 1000).toFixed(2);
-                        const placeDiv = document.createElement('div');
-                        placeDiv.className = 'flex justify-between items-center text-xs';
-                        placeDiv.innerHTML = `<span class="text-gray-600 truncate pr-2">${place.name}</span> <span class="text-gray-500 font-medium whitespace-nowrap">${distanceInKm} km</span>`;
-                        content.appendChild(placeDiv);
-                    });
-                } else {
-                    content.innerHTML = `<p class="text-xs text-gray-400 italic">No locations found.</p>`;
-                }
-                header.addEventListener('click', () => {
-                    const isHidden = content.classList.contains('hidden');
-                    poiListContainer.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
-                    poiListContainer.querySelectorAll('.accordion-header svg').forEach(svg => svg.classList.remove('rotate-180'));
-                    if(isHidden) {
-                        content.classList.remove('hidden');
-                        header.querySelector('svg').classList.add('rotate-180');
+            handleMapClickForProperty(e) {
+                if (e.placeId) { e.stop(); return; } // Prevent firing on POI clicks
+                this.geocoder.geocode({ location: e.latLng }, (results, status) => {
+                    if (status === 'OK' && results[0]) {
+                        const place = results[0];
+                        // Filter out undesirable click locations like roads or parks
+                        const invalidTypes = ['natural_feature', 'park', 'airport', 'route', 'political'];
+                        if (place.types.some(type => invalidTypes.includes(type))) {
+                            this.showNotification('Invalid selection. Please click on a building or property.', 'error');
+                            return;
+                        }
+                        this.resetUI();
+                        this.lastSearchedPlace = place;
+                        this.analyzeAddress(place);
+                        
+                        this.map.panTo(e.latLng);
+                        // Adjust map center to account for the sidebar on desktop
+                        if (window.innerWidth >= 768) this.map.panBy(-225, 0); 
+                    } else {
+                        console.error('Geocode was not successful for the following reason: ' + status);
+                        this.showNotification('Could not find address information for this location.', 'error');
                     }
                 });
-                categoryDiv.appendChild(header);
-                categoryDiv.appendChild(content);
-                poiListContainer.appendChild(categoryDiv);
+            },
+
+            analyzeAddress(place) {
+                document.getElementById('instructions').classList.add('hidden');
+                const targetPanelId = this.currentMode === 'property' ? 'property-valuation-panel' : 'seller-pitch-panel';
+                document.querySelectorAll('.analysis-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById(targetPanelId).classList.remove('hidden');
+                document.getElementById('action-buttons').classList.remove('hidden');
+
+                const addressFieldId = this.currentMode === 'property' ? 'property-address' : 'seller-address';
+                document.getElementById(addressFieldId).textContent = place.formatted_address;
+
+                const contentFieldId = this.currentMode === 'property' ? 'property-valuation-content' : 'seller-pitch-content';
+                const generateBtnId = this.currentMode === 'property' ? 'generate-valuation-button' : 'generate-pitch-button';
+                const loaderId = this.currentMode === 'property' ? 'property-loading' : 'seller-loading';
+                
+                document.getElementById(contentFieldId).innerHTML = '<p></p>';
+                document.getElementById(generateBtnId).classList.remove('hidden');
+                document.getElementById(loaderId).classList.add('hidden');
+                
+                if(this.addressMarker) this.addressMarker.setMap(null);
+                this.addressMarker = new google.maps.Marker({ map: this.map, position: place.geometry.location });
+            },
+            
+            async analyzeShape() {
+                const shape = this.selectedShape;
+                const path = shape.getPath();
+                const areaInMeters = google.maps.geometry.spherical.computeArea(path);
+                document.getElementById('area').innerText = `${areaInMeters.toFixed(2)} m²`;
+                
+                const bounds = new google.maps.LatLngBounds();
+                path.getArray().forEach(vertex => bounds.extend(vertex));
+                const center = bounds.getCenter();
+    
+                const poiTypes = {
+                    'Transit Station': ['transit_station'], 'Shopping': ['shopping_mall'],
+                    'Food & Drink': ['restaurant'], 'Education': ['school'],
+                    'Health': ['hospital'], 'Lodging': ['hotel'], 'Finance': ['bank'],
+                };
+                
+                const poiData = {};
+                const promises = Object.keys(poiTypes).map(async (category) => {
+                    const request = { location: center, radius: '5000', types: poiTypes[category] };
+                    try {
+                        const results = await new Promise((resolve, reject) => {
+                             // Timeout to prevent hanging on a failed request
+                            setTimeout(() => reject(new Error('TIMEOUT')), 10000); 
+                            this.placesService.nearbySearch(request, (res, status) => {
+                                if (status === google.maps.places.PlacesServiceStatus.OK || status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) resolve(res || []);
+                                else reject(new Error(status));
+                            });
+                        });
+                        poiData[category] = results;
+                    } catch (error) {
+                        poiData[category] = [];
+                        this.handleApiError(error.message, category);
+                    }
+                });
+
+                await Promise.all(promises);
+                
+                this.displayPoiResults(poiData, center);
+                const poiCounts = Object.keys(poiData).reduce((acc, key) => ({...acc, [key]: poiData[key].length}), {});
+                this.calculateAndDisplayScore(areaInMeters, poiCounts);
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('analysis-content').classList.remove('hidden');
+            },
+            
+            displayPoiResults(poiData, centerPoint) {
+                const poiListContainer = document.getElementById('poi-list');
+                poiListContainer.innerHTML = ''; 
+    
+                const sortedCategories = Object.keys(poiData).sort((a, b) => poiData[b].length - poiData[a].length);
+                sortedCategories.forEach(category => {
+                    const places = poiData[category];
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'border-b last:border-b-0';
+                    const header = document.createElement('div');
+                    header.className = 'flex justify-between items-center p-2 cursor-pointer hover:bg-gray-50 accordion-header';
+                    header.innerHTML = `<span class="font-semibold text-gray-700">${category}</span><div class="flex items-center space-x-2"><span id="count-${category.replace(/\s+/g, '')}" class="font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">${places.length}</span><svg class="h-5 w-5 text-gray-500 transform transition-transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></div>`;
+                    const content = document.createElement('div');
+                    content.className = 'hidden pl-4 pr-2 pb-2 space-y-2 accordion-content';
+                    if (places.length > 0) {
+                        places.forEach(place => {
+                            const distance = google.maps.geometry.spherical.computeDistanceBetween(centerPoint, place.geometry.location);
+                            const distanceInKm = (distance / 1000).toFixed(2);
+                            const placeDiv = document.createElement('div');
+                            placeDiv.className = 'flex justify-between items-center text-xs p-1 rounded-md cursor-pointer hover:bg-gray-200';
+                            placeDiv.innerHTML = `<span class="text-gray-600 truncate pr-2">${place.name}</span> <span class="text-gray-500 font-medium whitespace-nowrap">${distanceInKm} km</span>`;
+                            placeDiv.addEventListener('click', () => this.showPoiOnMap(place));
+                            content.appendChild(placeDiv);
+                        });
+                    } else {
+                        content.innerHTML = `<p class="text-xs text-gray-400 italic">No locations found.</p>`;
+                    }
+                    header.addEventListener('click', () => {
+                        const isHidden = content.classList.contains('hidden');
+                        poiListContainer.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
+                        poiListContainer.querySelectorAll('.accordion-header svg').forEach(svg => svg.classList.remove('rotate-180'));
+                        if(isHidden) {
+                            content.classList.remove('hidden');
+                            header.querySelector('svg').classList.add('rotate-180');
+                        }
+                    });
+                    categoryDiv.appendChild(header);
+                    categoryDiv.appendChild(content);
+                    poiListContainer.appendChild(categoryDiv);
+                });
+            },
+    
+            showPoiOnMap(place) {
+                if (this.poiMarker) this.poiMarker.setMap(null);
+                if (this.poiLine) this.poiLine.setMap(null);
+                
+                this.poiMarker = new google.maps.Marker({ 
+                    position: place.geometry.location, 
+                    map: this.map, 
+                    icon: { url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" } 
+                });
+
+                let centerPoint;
+                // A drawn polygon (selectedShape) does not have a getBounds() method directly.
+                // We must calculate its bounds from its path.
+                if (this.selectedShape && typeof this.selectedShape.getPath === 'function') {
+                    const bounds = new google.maps.LatLngBounds();
+                    this.selectedShape.getPath().getArray().forEach(vertex => bounds.extend(vertex));
+                    centerPoint = bounds.getCenter();
+                } else if (this.addressMarker) {
+                    centerPoint = this.addressMarker.getPosition();
+                } else {
+                    // Fallback to map center if no shape or marker is available
+                    centerPoint = this.map.getCenter();
+                }
+
+                this.poiLine = new google.maps.Polyline({ 
+                    path: [centerPoint, place.geometry.location], 
+                    geodesic: true, 
+                    strokeColor: '#22c55e', 
+                    strokeOpacity: 0.8, 
+                    strokeWeight: 2 
+                });
+                this.poiLine.setMap(this.map);
+    
+                const content = `<div class="p-2"><p class="font-bold">${place.name}</p><p class="text-xs text-gray-600">${place.vicinity}</p><div id="street-view" class="w-full h-24 mt-2 bg-gray-200 rounded"></div></div>`;
+                this.poiInfoWindow.setContent(content);
+                this.poiInfoWindow.open({ map: this.map, anchor: this.poiMarker });
+                
+                // We need a slight delay to ensure the info window is in the DOM
+                setTimeout(() => {
+                    new google.maps.StreetViewPanorama(document.getElementById("street-view"), { 
+                        position: place.geometry.location, 
+                        pov: { heading: 34, pitch: 10 }, 
+                        addressControl: false, linksControl: false, panControl: false, enableCloseButton: false, zoomControl: false, visible: true 
+                    });
+                }, 100);
+            },
+            
+            calculateAndDisplayScore(area, poiCounts) {
+                let score = 0;
+                const poiWeights = { 'Transit Station': 2.5, 'Shopping': 2.0, 'Food & Drink': 1.5, 'Education': 1.2, 'Health': 1.2, 'Finance': 1.0, 'Lodging': 0.8 };
+                for (const category in poiCounts) { 
+                    if (typeof poiCounts[category] === 'number') { // Only include valid counts
+                        score += (poiCounts[category] || 0) * (poiWeights[category] || 1); 
+                    }
+                }
+                let normalizedScore = Math.min(Math.round(score / 2), 100);
+                if (area > 10000) { normalizedScore += Math.min(5, Math.log10(area/10000) * 5); }
+                if (area > 50000) { normalizedScore += Math.min(5, Math.log10(area/50000) * 5); }
+                normalizedScore = Math.min(Math.round(normalizedScore), 100);
+                const scoreElement = document.getElementById('score');
+                const descElement = document.getElementById('score-description');
+                if (scoreElement.innerText === 'Error') return; // Don't update if there was a critical API error
+                scoreElement.innerText = normalizedScore;
+                if (normalizedScore >= 85) { descElement.innerText = "Excellent commercial potential."; } 
+                else if (normalizedScore >= 70) { descElement.innerText = "Very Good potential.";} 
+                else if (normalizedScore >= 50) { descElement.innerText = "Good potential."; } 
+                else if (normalizedScore >= 30) { descElement.innerText = "Moderate potential."; } 
+                else { descElement.innerText = "Developing potential."; }
+            },
+    
+            async getSellerPitch() {
+                if (!this.lastSearchedPlace) return;
+                const btn = document.getElementById('generate-pitch-button');
+                const contentDiv = document.getElementById('seller-pitch-content');
+                const loader = document.getElementById('seller-loading');
+                btn.classList.add('hidden');
+                loader.classList.remove('hidden');
+                contentDiv.innerHTML = '';
+                
+                try {
+                    const address = this.lastSearchedPlace.formatted_address;
+                    const prompt = `Generate a compelling real estate agent pitch for a property owner at "${address}". Highlight the key selling points based on market data. Use this format exactly:\n\n**Market Snapshot:**\n- [Point about current market favorability]\n\n**Key Strengths of Your Property:**\n- [Point about location]\n- [Point about nearby amenities]\n\n**Our Marketing Strategy:**\n- [Point about reaching buyers]\n- [Point about pricing strategy]`;
+                    const resultText = await this.callGemini(prompt);
+                    this.displayFormattedSummary(resultText, contentDiv);
+                } catch (error) {
+                    this.handleAiError(error, contentDiv, btn);
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            },
+            async getFeasibilitySummary() {
+                if (!this.selectedShape) return;
+                const btn = document.getElementById('generate-summary-button');
+                const contentDiv = document.getElementById('ai-summary-content');
+                const loader = document.getElementById('ai-loading');
+                btn.classList.add('hidden');
+                loader.classList.remove('hidden');
+                contentDiv.innerHTML = '';
+    
+                const path = this.selectedShape.getPath();
+                const bounds = new google.maps.LatLngBounds();
+                path.getArray().forEach(vertex => bounds.extend(vertex));
+                const center = bounds.getCenter();
+    
+                try {
+                    const geoResponse = await this.geocoder.geocode({ location: center });
+                    if (!geoResponse.results || geoResponse.results.length === 0) throw new Error("Could not determine location name.");
+                    const locality = geoResponse.results[0].address_components.find(c => c.types.includes('locality') || c.types.includes('administrative_area_level_2') || c.types.includes('administrative_area_level_1'));
+                    const locationName = locality ? locality.long_name : geoResponse.results[0].formatted_address;
+                    const prompt = `Generate a commercial feasibility study summary for ${locationName} for the last 5 years. Use this format exactly:\n\n**Major Development Projects:**\n- [Point]\n\n**Economic & Population Trends:**\n- [Point]\n\n**Infrastructure Improvements:**\n- [Point]\n\n**Market Sentiment & Future Outlook:**\n- [Point]`;
+                    const resultText = await this.callGemini(prompt);
+                    this.displayFormattedSummary(resultText, contentDiv);
+                } catch (error) {
+                    this.handleAiError(error, contentDiv, btn);
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            },
+            async getMarketValueEstimate() {
+                if (!this.lastSearchedPlace) return;
+                const btn = document.getElementById('generate-valuation-button');
+                const contentDiv = document.getElementById('property-valuation-content');
+                const loader = document.getElementById('property-loading');
+                btn.classList.add('hidden');
+                loader.classList.remove('hidden');
+                contentDiv.innerHTML = '';
+                
+                try {
+                    const address = this.lastSearchedPlace.formatted_address;
+                    const prompt = `Provide an estimated market value for a standard residential property at "${address}". Analyze recent real estate listings and sales trends in the surrounding area. Consider property type, proximity to local amenities, and market conditions. Present the answer in this format exactly:\n\n**Estimated Value Range:**\n- [Value Range]\n\n**Key Valuation Factors:**\n- [Point 1]\n- [Point 2]\n\n**Market Comps:**\n- [Point 1]\n- [Point 2]`;
+                    const resultText = await this.callGemini(prompt);
+                    this.displayFormattedSummary(resultText, contentDiv);
+                } catch (error) {
+                    this.handleAiError(error, contentDiv, btn);
+                } finally {
+                    loader.classList.add('hidden');
+                }
+            },
+            async callGemini(prompt) {
+                if (!this.API_KEY || this.API_KEY === "YOUR_API_KEY") {
+                    throw new Error("API Key is not configured. Please add your Gemini API key.");
+                }
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${this.API_KEY}`;
+                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+                const result = await response.json();
+                if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else if (result.error) {
+                     throw new Error(`AI Model Error: ${result.error.message}`);
+                } else {
+                    throw new Error("The AI model returned an unexpected or empty response.");
+                }
+            },
+            displayFormattedSummary(text, container) {
+                 container.innerHTML = ''; 
+                const lines = text.split('\n').filter(line => line.trim() !== '');
+                let currentList = null;
+
+                lines.forEach(line => {
+                    if (line.startsWith('**') && line.endsWith('**')) {
+                        if (currentList) container.appendChild(currentList);
+                        const heading = document.createElement('h5');
+                        heading.className = 'font-semibold text-gray-800 mt-4 mb-2';
+                        heading.textContent = line.replace(/\*\*/g, '');
+                        container.appendChild(heading);
+                        currentList = document.createElement('ul');
+                        currentList.className = 'space-y-1';
+                    } else if (line.trim().startsWith('-') && currentList) {
+                        const listItem = document.createElement('li');
+                        listItem.className = 'ml-5 list-disc text-gray-700';
+                        listItem.textContent = line.trim().substring(1).trim();
+                        currentList.appendChild(listItem);
+                    } else {
+                        if(currentList) container.appendChild(currentList);
+                        currentList = null;
+                        const p = document.createElement('p');
+                        p.textContent = line;
+                        container.appendChild(p);
+                    }
+                });
+                if (currentList) container.appendChild(currentList);
+            },
+            showNotification(message, type = 'info') {
+                 const instructionsPanel = document.getElementById('instructions');
+                const header = document.getElementById('instructions-header');
+                const body = document.getElementById('instructions-body');
+                
+                const originalHeaderHTML = header.innerHTML;
+                const originalBodyHTML = body.innerHTML;
+                
+                header.textContent = type === 'error' ? 'Invalid Selection' : 'Info';
+                body.innerHTML = `<p class="text-sm mt-2">${message}</p>`;
+
+                instructionsPanel.classList.remove('bg-blue-50', 'border-blue-400', 'bg-red-100', 'border-red-500');
+                header.classList.remove('text-blue-800', 'text-red-800');
+
+                if (type === 'error') {
+                    instructionsPanel.classList.add('bg-red-100', 'border-red-500');
+                    header.classList.add('text-red-800');
+                } else {
+                    instructionsPanel.classList.add('bg-blue-50', 'border-blue-400');
+                    header.classList.add('text-blue-800');
+                }
+
+                setTimeout(() => {
+                    header.innerHTML = originalHeaderHTML;
+                    body.innerHTML = originalBodyHTML;
+                    instructionsPanel.classList.remove('bg-red-100', 'border-red-500');
+                    header.classList.remove('text-red-800');
+                    instructionsPanel.classList.add('bg-blue-50', 'border-blue-400');
+                    header.classList.add('text-blue-800');
+                }, 4000);
+            },
+            handleAiError(error, container, button){
+                console.error("AI Generation Error:", error);
+                container.innerHTML = `
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                      <p class="font-bold">Analysis Failed</p>
+                      <p class="text-sm">${error.message || 'An unknown error occurred.'}</p>
+                    </div>
+                `;
+                if(button) {
+                    button.classList.remove('hidden');
+                }
+            },
+            handleApiError(status, category) {
+                console.error(`Places API Error for ${category}: ${status}`);
+                const scoreElement = document.getElementById('score');
+                const descElement = document.getElementById('score-description');
+                const categoryCountElement = document.getElementById(`count-${category.replace(/\s+/g, '')}`);
+
+                if (categoryCountElement) {
+                    categoryCountElement.textContent = 'Error';
+                    categoryCountElement.classList.remove('bg-blue-100', 'text-blue-600');
+                    categoryCountElement.classList.add('bg-red-100', 'text-red-600');
+                }
+
+                // If a critical API fails (like OVER_QUERY_LIMIT), show an error for the overall score.
+                if (status === 'OVER_QUERY_LIMIT') {
+                    scoreElement.innerText = 'Error';
+                    descElement.innerText = 'API query limit reached. Please try again later.';
+                    scoreElement.parentElement.classList.remove('from-blue-500', 'to-indigo-600');
+                    scoreElement.parentElement.classList.add('from-red-500', 'to-red-700');
+                }
+            },
+            
+            resetUI() {
+                if (this.selectedShape) { this.selectedShape.setMap(null); this.selectedShape = null; }
+                if (this.addressMarker) { this.addressMarker.setMap(null); this.addressMarker = null; }
+                if (this.poiMarker) { this.poiMarker.setMap(null); this.poiMarker = null; }
+                if (this.poiLine) { this.poiLine.setMap(null); this.poiLine = null; }
+                if (this.poiInfoWindow) this.poiInfoWindow.close();
+
+                this.lastSearchedPlace = null;
+                
+                document.querySelectorAll('.analysis-panel').forEach(p => p.classList.add('hidden'));
+                document.getElementById('action-buttons').classList.add('hidden');
+                document.getElementById('instructions').classList.remove('hidden');
+                
+                // Reset score display
+                const scoreElement = document.getElementById('score');
+                const descElement = document.getElementById('score-description');
+                scoreElement.innerText = '0';
+                descElement.innerText = '';
+                scoreElement.parentElement.classList.remove('from-red-500', 'to-red-700');
+                scoreElement.parentElement.classList.add('from-blue-500', 'to-indigo-600');
+            }
+        };
+
+        function initMap() {
+            const mapInstance = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 3.0272, lng: 101.7925 }, // Centered on Kajang, Selangor
+                zoom: 12,
+                mapTypeId: 'roadmap',
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false
             });
+            App.init(mapInstance); 
         }
 
-        function calculateAndDisplayScore(area, poiCounts) {
-             let score = 0;
-            const poiWeights = { 'Transit Station': 2.5, 'Shopping': 2.0, 'Food & Drink': 1.5, 'Education': 1.2, 'Health': 1.2, 'Finance': 1.0, 'Lodging': 0.8 };
-            for (const category in poiCounts) { score += (poiCounts[category] || 0) * (poiWeights[category] || 1); }
-            let normalizedScore = Math.min(Math.round(score / 2), 100);
-            if (area > 10000) { normalizedScore += Math.min(5, Math.log10(area/10000) * 5); }
-            if (area > 50000) { normalizedScore += Math.min(5, Math.log10(area/50000) * 5); }
-            normalizedScore = Math.min(Math.round(normalizedScore), 100);
-            const scoreElement = document.getElementById('score');
-            const descElement = document.getElementById('score-description');
-            if (scoreElement.innerText === 'Error') return;
-            scoreElement.innerText = normalizedScore;
-            if (normalizedScore >= 85) { descElement.innerText = "Excellent commercial potential."; } 
-            else if (normalizedScore >= 70) { descElement.innerText = "Very Good potential.";} 
-            else if (normalizedScore >= 50) { descElement.innerText = "Good potential."; } 
-            else if (normalizedScore >= 30) { descElement.innerText = "Moderate potential."; } 
-            else { descElement.innerText = "Developing potential."; }
-        }
-
-        // --- AI-POWERED FUNCTIONS ---
-        async function getFeasibilitySummary() {
-            if (!selectedShape) return;
-            const btn = document.getElementById('generate-summary-button');
-            const contentDiv = document.getElementById('ai-summary-content');
-            const loader = document.getElementById('ai-loading');
-            btn.classList.add('hidden');
-            loader.classList.remove('hidden');
-            contentDiv.innerHTML = '';
-
-            const path = selectedShape.getPath();
-            const bounds = new google.maps.LatLngBounds();
-            path.getArray().forEach(vertex => bounds.extend(vertex));
-            const center = bounds.getCenter();
-
-            try {
-                const geoResponse = await geocoder.geocode({ location: center });
-                if (!geoResponse.results || geoResponse.results.length === 0) throw new Error("Could not determine location name.");
-                const locality = geoResponse.results[0].address_components.find(c => c.types.includes('locality') || c.types.includes('administrative_area_level_2') || c.types.includes('administrative_area_level_1'));
-                const locationName = locality ? locality.long_name : geoResponse.results[0].formatted_address;
-                const prompt = `Generate a commercial feasibility study summary for ${locationName} for the last 5 years. Use this format exactly:\n\n**Major Development Projects:**\n- [Point]\n\n**Economic & Population Trends:**\n- [Point]\n\n**Infrastructure Improvements:**\n- [Point]\n\n**Market Sentiment & Future Outlook:**\n- [Point]`;
-                const resultText = await callGemini(prompt);
-                displayFormattedSummary(resultText, contentDiv);
-            } catch (error) {
-                handleAiError(error, contentDiv, btn);
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-
-        async function getMarketValueEstimate() {
-            if (!lastSearchedPlace) return;
-            const btn = document.getElementById('generate-valuation-button');
-            const contentDiv = document.getElementById('property-valuation-content');
-            const loader = document.getElementById('property-loading');
-            btn.classList.add('hidden');
-            loader.classList.remove('hidden');
-            contentDiv.innerHTML = '';
-            
-            try {
-                const address = lastSearchedPlace.formatted_address;
-                const prompt = `Provide an estimated market value for a standard residential property at "${address}". Analyze recent real estate listings and sales trends in the surrounding area. Consider property type, proximity to local amenities, and market conditions. Present the answer in this format exactly:\n\n**Estimated Value Range:**\n- [Value Range]\n\n**Key Valuation Factors:**\n- [Point 1]\n- [Point 2]\n\n**Market Comps:**\n- [Point 1]\n- [Point 2]`;
-                const resultText = await callGemini(prompt);
-                displayFormattedSummary(resultText, contentDiv);
-            } catch (error) {
-                handleAiError(error, contentDiv, btn);
-            } finally {
-                loader.classList.add('hidden');
-            }
-        }
-        
-        async function callGemini(prompt) {
-            const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
-            const result = await response.json();
-            if (result.candidates && result.candidates[0]?.content?.parts[0]?.text) {
-                return result.candidates[0].content.parts[0].text;
-            } else {
-                throw new Error("The AI model returned no content.");
-            }
-        }
-
-        function displayFormattedSummary(text, container) {
-             const html = text
-                .replace(/\*\*(.*?)\*\*/g, '<h5 class="font-semibold text-gray-800 mt-4 mb-2">$1</h5>')
-                .replace(/(\n|^)[\*|-]\s/g, '<li>')
-                .split('<li>')
-                .map((item, index) => index === 0 ? item : `<li class="ml-4 list-disc">${item.trim()}</li>`)
-                .join('')
-                .replace(/<\/li>(\s*<h5)/g, '</li></ul>$1')
-                .replace(/(<h5>.*?<\/h5>)/g, '$1<ul>') + '</ul>';
-            container.innerHTML = html.replace(/<ul><\/ul>/g, '');
-        }
-
-        // --- ERROR HANDLING & UTILITIES ---
-        function showNotification(message, type = 'info') {
-            const instructionsPanel = document.getElementById('instructions');
-            const header = document.getElementById('instructions-header');
-            const body = document.getElementById('instructions-body');
-            
-            // Save original content
-            const originalHeader = header.innerHTML;
-            const originalBody = body.innerHTML;
-            
-            // Set error/info message
-            header.textContent = type === 'error' ? 'Invalid Selection' : 'Info';
-            body.innerHTML = `<p class="text-sm mt-2">${message}</p>`;
-
-            // Change colors
-            instructionsPanel.classList.remove('bg-blue-50', 'border-blue-400');
-            header.classList.remove('text-blue-800');
-            if (type === 'error') {
-                instructionsPanel.classList.add('bg-red-100', 'border-red-500');
-                header.classList.add('text-red-800');
-            }
-
-            // Revert after a delay
-            setTimeout(() => {
-                header.innerHTML = originalHeader;
-                body.innerHTML = originalBody;
-                instructionsPanel.classList.add('bg-blue-50', 'border-blue-400');
-                instructionsPanel.classList.remove('bg-red-100', 'border-red-500');
-                header.classList.add('text-blue-800');
-                header.classList.remove('text-red-800');
-            }, 4000);
-        }
-
-        function handleAiError(error, container, button){
-             console.error("AI Error:", error);
-            let userErrorMessage = `<p class="text-red-500">Could not generate the analysis. Error: ${error.message}</p>`;
-            if (error.message && (error.message.includes('REQUEST_DENIED') || error.message.includes('GEOCODER_GEOCODE'))) {
-                 userErrorMessage = `<div class="api-error bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">API Key Error</p><p class="mt-2">Your API key is not authorized to use a required service (e.g., Geocoding or Generative Language API). Please check your Google Cloud Console to ensure all necessary APIs are enabled and added to your key's restrictions.</p></div>`;
-            }
-            container.innerHTML = userErrorMessage;
-            button.classList.remove('hidden');
-        }
-
-        function handleApiError(status, category) {
-            const poiList = document.getElementById('poi-list');
-            const errorId = `api-error-${category.replace(/\s+/g, '-')}`;
-            if (document.getElementById(errorId)) return; 
-            let errorMessage = '';
-            if (status === google.maps.places.PlacesServiceStatus.REQUEST_DENIED) {
-                 errorMessage = `<div id="${errorId}" class="api-error bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">API Key Error: Website Not Authorized</p><p class="mt-2 text-sm">Your API key's security settings are preventing this website from using Google Maps services. You need to add your website's URL to the list of allowed referrers in your Google Cloud Console.</p></div>`;
-            } else if (status === 'TIMEOUT') {
-                errorMessage = `<div id="${errorId}" class="api-error bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">Analysis Timed Out</p><p>The search for '${category}' took too long and failed.</p></div>`;
-            } else {
-                 errorMessage = `<div id="${errorId}" class="api-error bg-red-100 border-l-4 border-red-500 text-red-800 p-4 rounded-lg my-2" role="alert"><p class="font-bold">Network Error</p><p>Could not fetch '${category}' due to an API issue (Status: ${status}).</p></div>`;
-            }
-            poiList.insertAdjacentHTML('afterbegin', errorMessage);
-            document.getElementById('score').innerText = 'Error';
-            document.getElementById('score-description').innerText = 'Analysis is incomplete.';
-        }
-
-        function clearSelection(calledFromSwitch = false) {
-            if (selectedShape) { selectedShape.setMap(null); selectedShape = null; }
-            if (addressMarker) { addressMarker.setMap(null); addressMarker = null; }
-            lastSearchedPlace = null;
-            
-            document.getElementById('results-panel').classList.add('hidden');
-            document.getElementById('property-valuation-panel').classList.add('hidden');
-            document.getElementById('clear-button').classList.add('hidden');
-            document.getElementById('instructions').classList.remove('hidden');
-
-            if (!calledFromSwitch) {
-                 setAnalysisMode('property');
-            }
-        }
-        
-        // --- LOAD THE MAP SCRIPT ---
         function loadMapScript() {
-            if (API_KEY === "YOUR_API_KEY" || !API_KEY) {
-                document.getElementById('map').innerHTML = `<div class="flex items-center justify-center h-full bg-gray-200"><div class="text-center p-8 bg-white rounded-lg shadow-md"><h2 class="text-2xl font-bold text-red-600 mb-4">API Key Required</h2><p class="text-gray-700">Please replace <strong>"YOUR_API_KEY"</strong> in the JavaScript code with your actual Google Maps API key.</p></div></div>`;
+            if (!App.API_KEY || App.API_KEY === "YOUR_API_KEY") {
+                document.getElementById('sidebar').style.display = 'none';
+                document.getElementById('map-container').innerHTML = `<div class="flex items-center justify-center h-full bg-gray-200"><div class="text-center p-8 bg-white rounded-lg shadow-md"><h2 class="text-2xl font-bold text-red-600 mb-4">Configuration Error</h2><p class="text-gray-700">Please replace <strong>"YOUR_API_KEY"</strong> in the JavaScript code with your actual Google Maps and Gemini API key to use this application.</p></div></div>`;
                 return;
             }
             const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places,drawing,geometry,search&callback=initMap`;
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${App.API_KEY}&libraries=places,drawing,geometry,search&callback=initMap&v=weekly`;
             script.async = true;
             script.defer = true;
             document.head.appendChild(script);
